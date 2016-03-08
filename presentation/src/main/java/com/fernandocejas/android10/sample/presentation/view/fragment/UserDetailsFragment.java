@@ -15,20 +15,24 @@ import android.widget.TextView;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+
+import com.fernandocejas.android10.sample.domain.interactor.GetUserDetails;
+import com.fernandocejas.android10.sample.domain.interactor.GetUserList;
 import com.fernandocejas.android10.sample.presentation.R;
-import com.fernandocejas.android10.sample.presentation.internal.di.components.UserComponent;
+import com.fernandocejas.android10.sample.presentation.mapper.UserModelDataMapper;
 import com.fernandocejas.android10.sample.presentation.model.UserModel;
 import com.fernandocejas.android10.sample.presentation.presenter.UserDetailsPresenter;
+import com.fernandocejas.android10.sample.presentation.presenter.UserListPresenter;
 import com.fernandocejas.android10.sample.presentation.view.UserDetailsView;
+import com.fernandocejas.android10.sample.presentation.view.activity.UserDetailsActivity;
 import com.fernandocejas.android10.sample.presentation.view.component.AutoLoadImageView;
-import javax.inject.Inject;
 
 /**
  * Fragment that shows details of a certain user.
  */
 public class UserDetailsFragment extends BaseFragment implements UserDetailsView {
 
-  @Inject UserDetailsPresenter userDetailsPresenter;
+  UserDetailsPresenter userDetailsPresenter;
 
   @Bind(R.id.iv_cover) AutoLoadImageView iv_cover;
   @Bind(R.id.tv_fullname) TextView tv_fullname;
@@ -45,13 +49,13 @@ public class UserDetailsFragment extends BaseFragment implements UserDetailsView
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    this.getComponent(UserComponent.class).inject(this);
   }
 
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     final View fragmentView = inflater.inflate(R.layout.fragment_user_details, container, false);
     ButterKnife.bind(this, fragmentView);
+    setupPresenter();
     return fragmentView;
   }
 
@@ -117,6 +121,14 @@ public class UserDetailsFragment extends BaseFragment implements UserDetailsView
 
   @Override public Context context() {
     return getActivity().getApplicationContext();
+  }
+
+  private void setupPresenter() {
+    int userId = ((UserDetailsActivity)getActivity()).getUserId();
+    final GetUserDetails getUserListUserCase = new GetUserDetails(userId, getUserRepository(), getThreadExecutor(), getPostExecutionThread());
+    UserModelDataMapper userModelDataMapper = new UserModelDataMapper();
+    this.userDetailsPresenter = new UserDetailsPresenter(getUserListUserCase, userModelDataMapper);
+    this.userDetailsPresenter.setView(this);
   }
 
   /**

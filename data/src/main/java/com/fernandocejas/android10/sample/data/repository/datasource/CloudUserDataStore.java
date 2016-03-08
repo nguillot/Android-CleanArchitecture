@@ -30,9 +30,12 @@ public class CloudUserDataStore implements UserDataStore {
   private final RestApi restApi;
   private final UserCache userCache;
 
-  private final Action1<UserEntity> saveToCacheAction = userEntity -> {
-    if (userEntity != null) {
-      CloudUserDataStore.this.userCache.put(userEntity);
+  private final Action1<UserEntity> saveToCacheAction = new Action1<UserEntity>() {
+    @Override
+    public void call(UserEntity userEntity) {
+      if (userEntity != null) {
+        CloudUserDataStore.this.userCache.put(userEntity);
+      }
     }
   };
 

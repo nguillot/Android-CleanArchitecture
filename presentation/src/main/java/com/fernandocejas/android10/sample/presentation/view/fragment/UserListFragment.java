@@ -17,15 +17,16 @@ import android.widget.RelativeLayout;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+
+import com.fernandocejas.android10.sample.domain.interactor.GetUserList;
 import com.fernandocejas.android10.sample.presentation.R;
-import com.fernandocejas.android10.sample.presentation.internal.di.components.UserComponent;
+import com.fernandocejas.android10.sample.presentation.mapper.UserModelDataMapper;
 import com.fernandocejas.android10.sample.presentation.model.UserModel;
 import com.fernandocejas.android10.sample.presentation.presenter.UserListPresenter;
 import com.fernandocejas.android10.sample.presentation.view.UserListView;
 import com.fernandocejas.android10.sample.presentation.view.adapter.UsersAdapter;
 import com.fernandocejas.android10.sample.presentation.view.adapter.UsersLayoutManager;
 import java.util.Collection;
-import javax.inject.Inject;
 
 /**
  * Fragment that shows a list of Users.
@@ -39,8 +40,8 @@ public class UserListFragment extends BaseFragment implements UserListView {
     void onUserClicked(final UserModel userModel);
   }
 
-  @Inject UserListPresenter userListPresenter;
-  @Inject UsersAdapter usersAdapter;
+  UserListPresenter userListPresenter;
+  UsersAdapter usersAdapter;
 
   @Bind(R.id.rv_users) RecyclerView rv_users;
   @Bind(R.id.rl_progress) RelativeLayout rl_progress;
@@ -62,13 +63,13 @@ public class UserListFragment extends BaseFragment implements UserListView {
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    this.getComponent(UserComponent.class).inject(this);
   }
 
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     final View fragmentView = inflater.inflate(R.layout.fragment_user_list, container, false);
     ButterKnife.bind(this, fragmentView);
+    setupPresenter();
     setupRecyclerView();
     return fragmentView;
   }
@@ -145,7 +146,15 @@ public class UserListFragment extends BaseFragment implements UserListView {
     return this.getActivity().getApplicationContext();
   }
 
+  private void setupPresenter() {
+    final GetUserList getUserListUserCase = new GetUserList(getUserRepository(), getThreadExecutor(), getPostExecutionThread());
+    UserModelDataMapper userModelDataMapper = new UserModelDataMapper();
+    this.userListPresenter = new UserListPresenter(getUserListUserCase, userModelDataMapper);
+    this.userListPresenter.setView(this);
+  }
+
   private void setupRecyclerView() {
+    this.usersAdapter = new UsersAdapter(context());
     this.usersAdapter.setOnItemClickListener(onItemClickListener);
     this.rv_users.setLayoutManager(new UsersLayoutManager(context()));
     this.rv_users.setAdapter(usersAdapter);

@@ -16,9 +16,18 @@
 package com.fernandocejas.android10.sample.presentation;
 
 import android.app.Application;
-import com.fernandocejas.android10.sample.presentation.internal.di.components.ApplicationComponent;
-import com.fernandocejas.android10.sample.presentation.internal.di.components.DaggerApplicationComponent;
-import com.fernandocejas.android10.sample.presentation.internal.di.modules.ApplicationModule;
+
+import com.fernandocejas.android10.sample.data.cache.FileManager;
+import com.fernandocejas.android10.sample.data.cache.UserCache;
+import com.fernandocejas.android10.sample.data.cache.UserCacheImpl;
+import com.fernandocejas.android10.sample.data.cache.serializer.JsonSerializer;
+import com.fernandocejas.android10.sample.data.entity.mapper.UserEntityDataMapper;
+import com.fernandocejas.android10.sample.data.executor.JobExecutor;
+import com.fernandocejas.android10.sample.data.repository.UserDataRepository;
+import com.fernandocejas.android10.sample.data.repository.datasource.UserDataStoreFactory;
+import com.fernandocejas.android10.sample.domain.executor.PostExecutionThread;
+import com.fernandocejas.android10.sample.domain.executor.ThreadExecutor;
+import com.fernandocejas.android10.sample.domain.repository.UserRepository;
 import com.squareup.leakcanary.LeakCanary;
 
 /**
@@ -26,7 +35,10 @@ import com.squareup.leakcanary.LeakCanary;
  */
 public class AndroidApplication extends Application {
 
-  private ApplicationComponent applicationComponent;
+  private ThreadExecutor threadExecutor;
+  private PostExecutionThread postExecutionThread;
+  private UserCache userCache;
+  private UserRepository userRepository;
 
   @Override public void onCreate() {
     super.onCreate();
@@ -35,13 +47,48 @@ public class AndroidApplication extends Application {
   }
 
   private void initializeInjector() {
-    this.applicationComponent = DaggerApplicationComponent.builder()
-        .applicationModule(new ApplicationModule(this))
-        .build();
+    JsonSerializer userCacheSerializer = new JsonSerializer();
+    FileManager fileManager = new FileManager();
+    threadExecutor = new JobExecutor();
+    userCache = new UserCacheImpl(getApplicationContext(), userCacheSerializer, fileManager, threadExecutor);
+
+    UserDataStoreFactory dataStoreFactory = new UserDataStoreFactory(getApplicationContext(), userCache);
+    UserEntityDataMapper userEntityDataMapper = new UserEntityDataMapper();
+
+    postExecutionThread = new UIThread();
+    userRepository = new UserDataRepository(dataStoreFactory, userEntityDataMapper);
   }
 
-  public ApplicationComponent getApplicationComponent() {
-    return this.applicationComponent;
+  public void setThreadExecutor(ThreadExecutor threadExecutor) {
+    this.threadExecutor = threadExecutor;
+  }
+
+  public void setPostExecutionThread(PostExecutionThread postExecutionThread) {
+    this.postExecutionThread = postExecutionThread;
+  }
+
+  public void setUserCache(UserCache userCache) {
+    this.userCache = userCache;
+  }
+
+  public void setUserRepository(UserRepository userRepository) {
+    this.userRepository = userRepository;
+  }
+
+  public ThreadExecutor getThreadExecutor() {
+    return threadExecutor;
+  }
+
+  public PostExecutionThread getPostExecutionThread() {
+    return postExecutionThread;
+  }
+
+  public UserCache getUserCache() {
+    return userCache;
+  }
+
+  public UserRepository getUserRepository() {
+    return userRepository;
   }
 
   private void initializeLeakDetection() {

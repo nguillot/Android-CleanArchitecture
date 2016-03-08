@@ -21,14 +21,12 @@ import com.fernandocejas.android10.sample.data.entity.UserEntity;
 import com.fernandocejas.android10.sample.data.exception.UserNotFoundException;
 import com.fernandocejas.android10.sample.domain.executor.ThreadExecutor;
 import java.io.File;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import rx.Observable;
+import rx.Subscriber;
 
 /**
  * {@link UserCache} implementation.
  */
-@Singleton
 public class UserCacheImpl implements UserCache {
 
   private static final String SETTINGS_FILE_NAME = "com.fernandocejas.android10.SETTINGS";
@@ -50,7 +48,6 @@ public class UserCacheImpl implements UserCache {
    * @param userCacheSerializer {@link JsonSerializer} for object serialization.
    * @param fileManager {@link FileManager} for saving serialized objects to the file system.
    */
-  @Inject
   public UserCacheImpl(Context context, JsonSerializer userCacheSerializer,
       FileManager fileManager, ThreadExecutor executor) {
     if (context == null || userCacheSerializer == null || fileManager == null || executor == null) {
@@ -64,16 +61,19 @@ public class UserCacheImpl implements UserCache {
   }
 
   @Override public Observable<UserEntity> get(final int userId) {
-    return Observable.create(subscriber -> {
-      File userEntityFile = UserCacheImpl.this.buildFile(userId);
-      String fileContent = UserCacheImpl.this.fileManager.readFileContent(userEntityFile);
-      UserEntity userEntity = UserCacheImpl.this.serializer.deserialize(fileContent);
+    return Observable.create(new Observable.OnSubscribe<UserEntity>() {
+      @Override
+      public void call(Subscriber<? super UserEntity> subscriber) {
+        File userEntityFile = UserCacheImpl.this.buildFile(userId);
+        String fileContent = UserCacheImpl.this.fileManager.readFileContent(userEntityFile);
+        UserEntity userEntity = UserCacheImpl.this.serializer.deserialize(fileContent);
 
-      if (userEntity != null) {
-        subscriber.onNext(userEntity);
-        subscriber.onCompleted();
-      } else {
-        subscriber.onError(new UserNotFoundException());
+        if (userEntity != null) {
+          subscriber.onNext(userEntity);
+          subscriber.onCompleted();
+        } else {
+          subscriber.onError(new UserNotFoundException());
+        }
       }
     });
   }

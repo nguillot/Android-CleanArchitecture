@@ -17,7 +17,6 @@ import com.fernandocejas.android10.sample.presentation.model.UserModel;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Adaptar that manages a collection of {@link UserModel}.
@@ -33,7 +32,6 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
 
   private OnItemClickListener onItemClickListener;
 
-  @Inject
   public UsersAdapter(Context context) {
     this.layoutInflater =
         (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);

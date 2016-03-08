@@ -7,7 +7,12 @@ package com.fernandocejas.android10.sample.presentation.view.fragment;
 
 import android.app.Fragment;
 import android.widget.Toast;
-import com.fernandocejas.android10.sample.presentation.internal.di.HasComponent;
+
+import com.fernandocejas.android10.sample.data.cache.UserCache;
+import com.fernandocejas.android10.sample.domain.executor.PostExecutionThread;
+import com.fernandocejas.android10.sample.domain.executor.ThreadExecutor;
+import com.fernandocejas.android10.sample.domain.repository.UserRepository;
+import com.fernandocejas.android10.sample.presentation.view.activity.BaseActivity;
 
 /**
  * Base {@link android.app.Fragment} class for every fragment in this application.
@@ -22,11 +27,23 @@ public abstract class BaseFragment extends Fragment {
     Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
   }
 
-  /**
-   * Gets a component for dependency injection by its type.
-   */
-  @SuppressWarnings("unchecked")
-  protected <C> C getComponent(Class<C> componentType) {
-    return componentType.cast(((HasComponent<C>) getActivity()).getComponent());
+  protected BaseActivity getBaseActivity() {
+    return (BaseActivity) getActivity();
+  }
+
+  public ThreadExecutor getThreadExecutor() {
+    return getBaseActivity().getAndroidApplication().getThreadExecutor();
+  }
+
+  public PostExecutionThread getPostExecutionThread() {
+    return getBaseActivity().getAndroidApplication().getPostExecutionThread();
+  }
+
+  public UserCache getUserCache() {
+    return getBaseActivity().getAndroidApplication().getUserCache();
+  }
+
+  public UserRepository getUserRepository() {
+    return getBaseActivity().getAndroidApplication().getUserRepository();
   }
 }
